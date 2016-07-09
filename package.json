@@ -1,0 +1,29 @@
+{
+  "name": "buttshock",
+  "version": "0.1.0",
+  "description": "Estim hardware (Erostek ET-312/ET-232, Estim Systems 2B) control for node.js",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/metafetish/buttshock-js.git"
+  },
+  "keywords": [
+    "electrostim",
+    "estim",
+    "hardware"
+  ],
+  "author": "The Metafetish Project",
+  "license": "BSD-3-Clause",
+  "bugs": {
+    "url": "https://github.com/metafetish/buttshock-js/issues",
+    "email": "kyle@machul.is"
+  },
+  "homepage": "https://github.com/metafetish/buttshock-js#readme",
+  "dependencies": {
+    "nodeserial": "4.x",
+    "bluebird": "3.x"
+  }
+}
