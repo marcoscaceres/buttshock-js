@@ -3,12 +3,10 @@ const Promise = require('bluebird');
 function Handcrank() {
   this.consumerQueue = [];
   this.inputBuffer = new Buffer([]);
-  console.log(this.inputBuffer);
 }
 
 Handcrank.prototype = {
   input: function input(data) {
-    console.log(this.inputBuffer);
     this.inputBuffer = Buffer.concat([this.inputBuffer, data]);
     while (this.inputBuffer.length > 0) {
       if (this.consumerQueue.length == 0) {
@@ -29,26 +27,6 @@ Handcrank.prototype = {
   }
 };
 
-// var internal_crank_test = function (buffer, length) {
-//   if (buffer.length < length) {
-//     return undefined;
-//   }
-//   return length;
-// };
-
-// function crank_test(desired_length) {
-//   c.add(function (buf) {
-//     return internal_crank_test(buf, desired_length);
-//   });
-// }
-
-// var c = new Handcrank();
-// crank_test(1);
-// crank_test(2);
-// c.input([0x0]);
-// c.input([0x1]);
-// c.input([0x2])
-
 const SerialPort = require('serialport');
 var port = new SerialPort('/dev/ttyS0',
                           { baudrate: 19200,
@@ -57,7 +35,7 @@ var port = new SerialPort('/dev/ttyS0',
                           });
 
 function ET312(port) {
-  this._cryptoKey = 0x0;
+  this._key = undefined;
   this._port = port;
   this._crank = new Handcrank();
   this._port.on("data", function(data) {
@@ -66,12 +44,56 @@ function ET312(port) {
 }
 
 ET312.prototype = {
+  _encrypt_command: function _encrypt_command(data) {
+  },
+  _generate_checksum: function _generate_checksum(data) {
+    var accum = 0;
+    for (var i = 0; i < data.length; ++i) {
+      accum += data[i];
+    }
+    if (accum > 256) {
+      return accum % 256;
+    }
+    return accum;
+  },
+  _verify_checksum: function _verify_checksum(data, reject) {
+    var checksum = data.readUInt8(data.length - 1);
+    if (checksum != this._generate_checksum(data.slice(0, -1))) {
+      reject("Checksums don't match!");
+    }
+  },
+  _key_exchange: function _exchange_keys(data, resolve, reject) {
+    if (data.length < 3) {
+      return undefined;
+    }
+    this._verify_checksum(data, reject);
+    if (data.readUInt8(0) != 0x21) {
+      reject("Wrong return code on key exchange!");
+    }
+    this._key = data.readUInt8(1);
+    resolve();
+    return 3;
+  },
+  key_exchange: function () {
+    var self = this;
+    return new Promise(function (resolve, reject) {
+      var key_command = [0x2f, 0x00];
+      key_command.push(self._generate_checksum(key_command));
+      console.log(key_command);
+      self._port.write(key_command, function (error) {
+        if (error) {
+          reject(error);
+        }
+        self._crank.add(function (data) {
+          return self._key_exchange(data, resolve, reject);
+        });
+      });
+    });
+  },
   _handshake_return: function _handshake_return(data, resolve, reject) {
     if (data.length < 1) {
       return undefined;
     }
-    console.log(data);
-    console.log("DATA IS " + data[0]);
     if (data.readUInt8(0) != 0x7) {
       reject();
     } else {
@@ -87,7 +109,6 @@ ET312.prototype = {
           reject(error);
         }
         self._crank.add(function (data) {
-          // This is promise context.
           return self._handshake_return(data, resolve, reject);
         });
       });
@@ -101,7 +122,14 @@ port.on('open', function() {
   var e = new ET312(port);
   e.handshake().then(function () {
     console.log("handshake succeeded!");
-    port.close();
+    e.key_exchange().then(function () {
+      console.log("Box key: " + e._key);
+      port.close();
+    }, function(err) {
+      console.log("key exchange failed!");
+      console.log(err);
+      port.close();
+    });
   }, function (err) {
     console.log("handshake failed!");
     console.log(err);
