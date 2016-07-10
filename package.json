@@ -23,7 +23,6 @@
   },
   "homepage": "https://github.com/metafetish/buttshock-js#readme",
   "dependencies": {
-    "nodeserial": "4.x",
-    "bluebird": "3.x"
+    "nodeserial": "4.x"
   }
 }
