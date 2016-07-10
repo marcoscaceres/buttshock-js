@@ -24,5 +24,8 @@
   "homepage": "https://github.com/metafetish/buttshock-js#readme",
   "dependencies": {
     "nodeserial": "4.x"
+  },
+  "devDependencies": {
+    "mocha": "^2.5.3"
   }
 }
