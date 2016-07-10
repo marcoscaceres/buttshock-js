@@ -1,11 +1,12 @@
 const SerialPort = require('serialport');
-const Handcrank = require('lib/Handcrank');
-const ET312 = require("ET312");
+const ET312 = require("./lib/ET312");
 const opts = {
   baudrate: 19200,
   // If only we had a viable parser to use
   parser: SerialPort.parsers.raw
 };
+
+const port = new SerialPort('/dev/ttyS0', opts);
 
 port.on('open', function() {
   var e = new ET312(port);
