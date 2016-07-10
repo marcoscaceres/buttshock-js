@@ -1,12 +1,12 @@
-const Promise = require('bluebird');
+const SerialPort = require('serialport');
 
-function Handcrank() {
-  this.consumerQueue = [];
-  this.inputBuffer = new Buffer([]);
-}
+class Handcrank {
+  constructor(){
+    this.consumerQueue = [];
+    this.inputBuffer = new Buffer([]);
+  }
 
-Handcrank.prototype = {
-  input: function input(data) {
+  input(data) {
     this.inputBuffer = Buffer.concat([this.inputBuffer, data]);
     while (this.inputBuffer.length > 0) {
       if (this.consumerQueue.length == 0) {
@@ -21,13 +21,14 @@ Handcrank.prototype = {
       }
     }
     return;
-  },
-  add: function add(f) {
+  }
+
+  add(f) {
     this.consumerQueue.push(f);
   }
-};
+}
 
-const SerialPort = require('serialport');
+
 var port = new SerialPort('/dev/ttyS0',
                           { baudrate: 19200,
                             // If only we had a viable parser to use
