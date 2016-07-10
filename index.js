@@ -1,3 +1,4 @@
+const SerialPort = require('serialport');
 
 class Handcrank {
   constructor(){
@@ -28,7 +29,6 @@ class Handcrank {
 }
 
 
-const SerialPort = require('serialport');
 var port = new SerialPort('/dev/ttyS0',
                           { baudrate: 19200,
                             // If only we had a viable parser to use
